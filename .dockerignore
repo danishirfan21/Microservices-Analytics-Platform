@@ -1,0 +1,12 @@
+**/__pycache__
+**/.pytest_cache
+**/*.pyc
+**/.env
+**/.git
+**/.gitignore
+**/node_modules
+**/build
+**/dist
+**/.vscode
+**/.idea
+**/README.md

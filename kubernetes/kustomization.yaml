@@ -1,0 +1,24 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  # Databases
+  - databases/db-secret.yaml
+  - databases/user-db-statefulset.yaml
+  - databases/analytics-db-statefulset.yaml
+
+  # User Service
+  - user-service/secret.yaml
+  - user-service/deployment.yaml
+  - user-service/service.yaml
+
+  # Analytics Service
+  - analytics-service/secret.yaml
+  - analytics-service/deployment.yaml
+  - analytics-service/service.yaml
+
+  # Frontend
+  - frontend/deployment.yaml
+  - frontend/service.yaml
+
+namespace: microservices-analytics
