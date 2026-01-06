@@ -1,13 +1,11 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from prometheus_fastapi_instrumentator import Instrumentator
+import logging
 
 from . import models
 from .database import engine
 from .routers import analytics
-
-# Create database tables
-models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
     title="Analytics Service API",
@@ -26,6 +24,15 @@ app.add_middleware(
 
 # Prometheus instrumentation
 Instrumentator().instrument(app).expose(app)
+
+@app.on_event("startup")
+async def startup_event():
+    """Create database tables when the application starts"""
+    try:
+        models.Base.metadata.create_all(bind=engine)
+        logging.info("Database tables created successfully")
+    except Exception as e:
+        logging.error(f"Error creating database tables: {e}")
 
 # Include routers
 app.include_router(analytics.router)

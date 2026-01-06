@@ -19,7 +19,7 @@ async def create_event(event: schemas.EventCreate, db: Session = Depends(get_db)
     db_event = models.Event(
         event_type=event.event_type,
         user_id=event.user_id,
-        metadata=event.metadata
+        event_metadata=event.event_metadata
     )
     db.add(db_event)
     db.commit()
