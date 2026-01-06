@@ -5,7 +5,7 @@ from datetime import datetime
 class EventCreate(BaseModel):
     event_type: str
     user_id: int
-    metadata: Optional[Dict[str, Any]] = {}
+    event_metadata: Optional[Dict[str, Any]] = {}
 
 class EventResponse(EventCreate):
     id: int

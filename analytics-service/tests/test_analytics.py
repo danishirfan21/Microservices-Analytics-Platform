@@ -9,7 +9,7 @@ def test_create_event(client):
         json={
             "event_type": "user_login",
             "user_id": 1,
-            "metadata": {"ip": "127.0.0.1"}
+            "event_metadata": {"ip": "127.0.0.1"}
         }
     )
 
@@ -29,7 +29,7 @@ def test_get_events(client):
             json={
                 "event_type": f"test_event_{i}",
                 "user_id": i + 1,
-                "metadata": {}
+                "event_metadata": {}
             }
         )
 
@@ -45,15 +45,15 @@ def test_get_events_with_filter(client):
     # Create events
     client.post(
         "/analytics/events",
-        json={"event_type": "user_login", "user_id": 1, "metadata": {}}
+        json={"event_type": "user_login", "user_id": 1, "event_metadata": {}}
     )
     client.post(
         "/analytics/events",
-        json={"event_type": "user_logout", "user_id": 1, "metadata": {}}
+        json={"event_type": "user_logout", "user_id": 1, "event_metadata": {}}
     )
     client.post(
         "/analytics/events",
-        json={"event_type": "user_login", "user_id": 2, "metadata": {}}
+        json={"event_type": "user_login", "user_id": 2, "event_metadata": {}}
     )
 
     # Filter by event type
@@ -73,15 +73,15 @@ def test_get_analytics_summary(client):
     # Create test events
     client.post(
         "/analytics/events",
-        json={"event_type": "user_login", "user_id": 1, "metadata": {}}
+        json={"event_type": "user_login", "user_id": 1, "event_metadata": {}}
     )
     client.post(
         "/analytics/events",
-        json={"event_type": "user_login", "user_id": 2, "metadata": {}}
+        json={"event_type": "user_login", "user_id": 2, "event_metadata": {}}
     )
     client.post(
         "/analytics/events",
-        json={"event_type": "profile_updated", "user_id": 1, "metadata": {}}
+        json={"event_type": "profile_updated", "user_id": 1, "event_metadata": {}}
     )
 
     # Get summary
@@ -103,12 +103,12 @@ def test_get_events_by_type(client):
     for i in range(3):
         client.post(
             "/analytics/events",
-            json={"event_type": "user_login", "user_id": i + 1, "metadata": {}}
+            json={"event_type": "user_login", "user_id": i + 1, "event_metadata": {}}
         )
     for i in range(2):
         client.post(
             "/analytics/events",
-            json={"event_type": "profile_updated", "user_id": i + 1, "metadata": {}}
+            json={"event_type": "profile_updated", "user_id": i + 1, "event_metadata": {}}
         )
 
     # Get events by type
@@ -127,11 +127,11 @@ def test_get_analytics_by_date_range(client):
     # Create events
     client.post(
         "/analytics/events",
-        json={"event_type": "user_login", "user_id": 1, "metadata": {}}
+        json={"event_type": "user_login", "user_id": 1, "event_metadata": {}}
     )
     client.post(
         "/analytics/events",
-        json={"event_type": "user_login", "user_id": 2, "metadata": {}}
+        json={"event_type": "user_login", "user_id": 2, "event_metadata": {}}
     )
 
     # Get date range analytics (default last 7 days)
@@ -151,11 +151,11 @@ def test_get_user_events(client):
     for i in range(3):
         client.post(
             "/analytics/events",
-            json={"event_type": "test_event", "user_id": 1, "metadata": {}}
+            json={"event_type": "test_event", "user_id": 1, "event_metadata": {}}
         )
     client.post(
         "/analytics/events",
-        json={"event_type": "test_event", "user_id": 2, "metadata": {}}
+        json={"event_type": "test_event", "user_id": 2, "event_metadata": {}}
     )
 
     # Get events for user 1
@@ -179,7 +179,7 @@ def test_event_pagination(client):
     for i in range(15):
         client.post(
             "/analytics/events",
-            json={"event_type": "test_event", "user_id": 1, "metadata": {}}
+            json={"event_type": "test_event", "user_id": 1, "event_metadata": {}}
         )
 
     # Get first page
