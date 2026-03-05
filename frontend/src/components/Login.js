@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import { User, Lock, Mail, UserPlus, LogIn } from 'lucide-react';
 import './Login.css';
 
 const USER_SERVICE_URL = process.env.REACT_APP_USER_SERVICE_URL || 'http://localhost:8000';
@@ -72,50 +73,74 @@ function Login({ onLogin }) {
             <>
               <div className="form-group">
                 <label>Email</label>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  placeholder="Enter your email"
-                />
+                <div className="input-with-icon">
+                  <Mail size={18} />
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    placeholder="Enter your email"
+                  />
+                </div>
               </div>
               <div className="form-group">
                 <label>Full Name</label>
-                <input
-                  type="text"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  placeholder="Enter your full name"
-                />
+                <div className="input-with-icon">
+                  <User size={18} />
+                  <input
+                    type="text"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    placeholder="Enter your full name"
+                  />
+                </div>
               </div>
             </>
           )}
 
           <div className="form-group">
             <label>Username</label>
-            <input
-              type="text"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              required
-              placeholder="Enter your username"
-            />
+            <div className="input-with-icon">
+              <User size={18} />
+              <input
+                type="text"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                required
+                placeholder="Enter your username"
+              />
+            </div>
           </div>
 
           <div className="form-group">
             <label>Password</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              placeholder="Enter your password"
-            />
+            <div className="input-with-icon">
+              <Lock size={18} />
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                placeholder="Enter your password"
+              />
+            </div>
           </div>
 
           <button type="submit" className="submit-btn" disabled={loading}>
-            {loading ? 'Processing...' : isRegistering ? 'Register' : 'Login'}
+            {loading ? (
+              'Processing...'
+            ) : isRegistering ? (
+              <>
+                <UserPlus size={18} style={{ marginRight: '8px' }} />
+                Register
+              </>
+            ) : (
+              <>
+                <LogIn size={18} style={{ marginRight: '8px' }} />
+                Login
+              </>
+            )}
           </button>
         </form>
 
