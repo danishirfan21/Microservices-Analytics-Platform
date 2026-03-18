@@ -10,7 +10,11 @@ import os
 from . import models, schemas
 from .database import get_db
 
-SECRET_KEY = os.getenv("SECRET_KEY", "your-secret-key-change-this")
+SECRET_KEY = os.getenv("SECRET_KEY")
+if not SECRET_KEY or SECRET_KEY == "your-secret-key-change-this":
+    if os.getenv("ENV") == "production":
+        raise RuntimeError("SECRET_KEY must be set in production environment")
+    SECRET_KEY = "dev-secret-key-only-for-local-development"
 ALGORITHM = os.getenv("ALGORITHM", "HS256")
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "30"))
 

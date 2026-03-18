@@ -1,8 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 from typing import List
 import httpx
 import os
+import logging
 
 from .. import models, schemas, auth
 from ..database import get_db
@@ -12,20 +14,25 @@ router = APIRouter(prefix="/users", tags=["users"])
 ANALYTICS_SERVICE_URL = os.getenv("ANALYTICS_SERVICE_URL", "http://localhost:8001")
 
 async def send_event_to_analytics(event_type: str, user_id: int, metadata: dict = None):
-    """Send event to analytics service"""
-    try:
-        async with httpx.AsyncClient() as client:
-            await client.post(
-                f"{ANALYTICS_SERVICE_URL}/analytics/events",
-                json={
-                    "event_type": event_type,
-                    "user_id": user_id,
-                    "metadata": metadata or {}
-                },
-                timeout=5.0
-            )
-    except Exception as e:
-        print(f"Failed to send event to analytics: {e}")
+    """Send event to analytics service asynchronously"""
+    async def _send():
+        try:
+            async with httpx.AsyncClient() as client:
+                await client.post(
+                    f"{ANALYTICS_SERVICE_URL}/analytics/events",
+                    json={
+                        "event_type": event_type,
+                        "user_id": user_id,
+                        "metadata": metadata or {}
+                    },
+                    timeout=5.0
+                )
+        except Exception as e:
+            logging.error(f"Failed to send event to analytics: {e}")
+
+    # Fire and forget
+    import asyncio
+    asyncio.create_task(_send())
 
 @router.post("/", response_model=schemas.UserResponse, status_code=status.HTTP_201_CREATED)
 async def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
@@ -69,6 +76,12 @@ async def get_users(
     """Get all users (authenticated)"""
     users = db.query(models.User).offset(skip).limit(limit).all()
     return users
+
+@router.get("/count", response_model=schemas.UserCount)
+async def get_user_count(db: Session = Depends(get_db)):
+    """Get total user count (internal)"""
+    count = db.query(func.count(models.User.id)).scalar()
+    return {"count": count}
 
 @router.get("/me", response_model=schemas.UserResponse)
 async def get_current_user_profile(current_user: models.User = Depends(auth.get_current_active_user)):

@@ -51,6 +51,8 @@ services:
       ALGORITHM: HS256
       ACCESS_TOKEN_EXPIRE_MINUTES: 30
       ANALYTICS_SERVICE_URL: http://analytics-service:8001
+      ENV: development
+      ALLOWED_ORIGINS: http://localhost:3000
     depends_on:
       user-db:
         condition: service_healthy
@@ -67,6 +69,8 @@ services:
     environment:
       DATABASE_URL: postgresql://user:password@analytics-db:5432/analyticsdb
       USER_SERVICE_URL: http://user-service:8000
+      ENV: development
+      ALLOWED_ORIGINS: http://localhost:3000
     depends_on:
       analytics-db:
         condition: service_healthy

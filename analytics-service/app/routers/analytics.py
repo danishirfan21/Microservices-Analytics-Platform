@@ -5,6 +5,7 @@ from typing import List, Optional
 from datetime import datetime, timedelta
 import httpx
 import os
+import logging
 
 from .. import models, schemas
 from ..database import get_db
@@ -16,6 +17,17 @@ USER_SERVICE_URL = os.getenv("USER_SERVICE_URL", "http://localhost:8000")
 @router.post("/events", response_model=schemas.EventResponse, status_code=201)
 async def create_event(event: schemas.EventCreate, db: Session = Depends(get_db)):
     """Record a new user activity event"""
+    # Basic check for user existence (internal)
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.get(f"{USER_SERVICE_URL}/users/{event.user_id}", timeout=2.0)
+            if response.status_code != 200:
+                # Optionally handle non-existent user. For now, we log and proceed
+                # since we don't want to block the event recording entirely
+                logging.warning(f"Event received for non-existent user_id: {event.user_id}")
+    except Exception as e:
+        logging.error(f"Failed to validate user_id {event.user_id}: {e}")
+
     db_event = models.Event(
         event_type=event.event_type,
         user_id=event.user_id,
@@ -48,16 +60,16 @@ async def get_events(
 @router.get("/summary", response_model=schemas.AnalyticsSummary)
 async def get_analytics_summary(db: Session = Depends(get_db)):
     """Get overall analytics summary"""
-    # Get total users from user service
+    # Get total users from user service count endpoint
     total_users = 0
     try:
         async with httpx.AsyncClient() as client:
-            response = await client.get(f"{USER_SERVICE_URL}/users", timeout=5.0)
+            response = await client.get(f"{USER_SERVICE_URL}/users/count", timeout=5.0)
             if response.status_code == 200:
-                users = response.json()
-                total_users = len(users)
+                data = response.json()
+                total_users = data.get("count", 0)
     except Exception as e:
-        print(f"Failed to fetch users from user service: {e}")
+        logging.error(f"Failed to fetch user count from user service: {e}")
         # Fallback: count distinct user_ids from events
         total_users = db.query(func.count(distinct(models.Event.user_id))).scalar()
 

@@ -36,3 +36,6 @@ class TokenData(BaseModel):
 class UserLogin(BaseModel):
     username: str
     password: str
+
+class UserCount(BaseModel):
+    count: int
