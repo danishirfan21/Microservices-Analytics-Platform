@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from sqlalchemy import func, distinct
 from typing import List, Optional
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import httpx
 import os
 import logging
@@ -11,6 +11,8 @@ from .. import models, schemas
 from ..database import get_db
 
 router = APIRouter(prefix="/analytics", tags=["analytics"])
+
+logger = logging.getLogger(__name__)
 
 USER_SERVICE_URL = os.getenv("USER_SERVICE_URL", "http://localhost:8000")
 
@@ -74,7 +76,7 @@ async def get_analytics_summary(db: Session = Depends(get_db)):
         total_users = db.query(func.count(distinct(models.Event.user_id))).scalar()
 
     # Get active users in last 24 hours
-    last_24h = datetime.utcnow() - timedelta(hours=24)
+    last_24h = datetime.now(timezone.utc) - timedelta(hours=24)
     active_users_24h = db.query(func.count(distinct(models.Event.user_id))).filter(
         models.Event.created_at >= last_24h
     ).scalar()
@@ -121,7 +123,7 @@ async def get_analytics_by_date_range(
 
     # Default to last 7 days if no dates provided
     if not start_date and not end_date:
-        end_date = datetime.utcnow()
+        end_date = datetime.now(timezone.utc)
         start_date = end_date - timedelta(days=7)
 
     if start_date:

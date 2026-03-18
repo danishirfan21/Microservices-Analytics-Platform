@@ -81,12 +81,12 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      args:
+        - REACT_APP_USER_SERVICE_URL=http://localhost:8000
+        - REACT_APP_ANALYTICS_SERVICE_URL=http://localhost:8001
     container_name: frontend
     ports:
       - "3000:80"
-    environment:
-      REACT_APP_USER_SERVICE_URL: http://localhost:8000
-      REACT_APP_ANALYTICS_SERVICE_URL: http://localhost:8001
     depends_on:
       - user-service
       - analytics-service

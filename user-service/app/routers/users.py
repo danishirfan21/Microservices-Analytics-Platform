@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from typing import List
@@ -10,6 +10,8 @@ from .. import models, schemas, auth
 from ..database import get_db
 
 router = APIRouter(prefix="/users", tags=["users"])
+
+logger = logging.getLogger(__name__)
 
 ANALYTICS_SERVICE_URL = os.getenv("ANALYTICS_SERVICE_URL", "http://localhost:8001")
 
@@ -35,7 +37,11 @@ async def send_event_to_analytics(event_type: str, user_id: int, metadata: dict 
     asyncio.create_task(_send())
 
 @router.post("/", response_model=schemas.UserResponse, status_code=status.HTTP_201_CREATED)
-async def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
+async def create_user(
+    user: schemas.UserCreate,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db)
+):
     """Register a new user"""
     # Check if user exists
     db_user = db.query(models.User).filter(
@@ -61,8 +67,8 @@ async def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(db_user)
 
-    # Send event to analytics
-    await send_event_to_analytics("user_registered", db_user.id, {"username": db_user.username})
+    # Send event to analytics (background task)
+    background_tasks.add_task(send_event_to_analytics, "user_registered", db_user.id, {"username": db_user.username})
 
     return db_user
 
@@ -104,6 +110,7 @@ async def get_user(
 async def update_user(
     user_id: int,
     user_update: schemas.UserUpdate,
+    background_tasks: BackgroundTasks,
     current_user: models.User = Depends(auth.get_current_active_user),
     db: Session = Depends(get_db)
 ):
@@ -132,8 +139,8 @@ async def update_user(
     db.commit()
     db.refresh(db_user)
 
-    # Send event to analytics
-    await send_event_to_analytics("profile_updated", db_user.id)
+    # Send event to analytics (background task)
+    background_tasks.add_task(send_event_to_analytics, "profile_updated", db_user.id)
 
     return db_user
 

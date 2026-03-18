@@ -16,11 +16,21 @@ import {
   Legend,
   ResponsiveContainer
 } from 'recharts';
+import {
+  Users,
+  Zap,
+  BarChart3,
+  Calendar,
+  LogOut,
+  RefreshCw,
+  TrendingUp,
+  Activity
+} from 'lucide-react';
 import './Dashboard.css';
 
 const ANALYTICS_SERVICE_URL = process.env.REACT_APP_ANALYTICS_SERVICE_URL || 'http://localhost:8001';
 
-const COLORS = ['#667eea', '#764ba2', '#f093fb', '#4facfe', '#43e97b', '#fa709a'];
+const COLORS = ['#4f46e5', '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
 
 function Dashboard({ token, onLogout }) {
   const [summary, setSummary] = useState(null);
@@ -100,32 +110,41 @@ function Dashboard({ token, onLogout }) {
   return (
     <div className="dashboard">
       <header className="dashboard-header">
-        <h1>Analytics Dashboard</h1>
-        <button onClick={onLogout} className="logout-btn">Logout</button>
+        <div className="header-title">
+          <Activity className="header-icon" />
+          <h1>Analytics Dashboard</h1>
+        </div>
+        <button onClick={onLogout} className="logout-btn">
+          <LogOut size={18} />
+          Logout
+        </button>
       </header>
 
       {error && <div className="error-banner">{error}</div>}
 
       <div className="date-filter">
-        <label>
-          Start Date:
-          <input
-            type="date"
-            name="start"
-            value={dateRange.start}
-            onChange={handleDateRangeChange}
-          />
-        </label>
-        <label>
-          End Date:
-          <input
-            type="date"
-            name="end"
-            value={dateRange.end}
-            onChange={handleDateRangeChange}
-          />
-        </label>
+        <div className="filter-group">
+          <label>
+            Start Date
+            <input
+              type="date"
+              name="start"
+              value={dateRange.start}
+              onChange={handleDateRangeChange}
+            />
+          </label>
+          <label>
+            End Date
+            <input
+              type="date"
+              name="end"
+              value={dateRange.end}
+              onChange={handleDateRangeChange}
+            />
+          </label>
+        </div>
         <button onClick={fetchAnalytics} className="refresh-btn">
+          <RefreshCw size={18} className={loading ? 'spinning' : ''} />
           Refresh
         </button>
       </div>
@@ -133,35 +152,43 @@ function Dashboard({ token, onLogout }) {
       {summary && (
         <div className="stats-grid">
           <div className="stat-card">
-            <div className="stat-icon">👥</div>
+            <div className="stat-icon-wrapper users">
+              <Users size={24} />
+            </div>
             <div className="stat-content">
               <h3>Total Users</h3>
-              <p className="stat-value">{summary.total_users}</p>
+              <p className="stat-value">{summary.total_users.toLocaleString()}</p>
             </div>
           </div>
 
           <div className="stat-card">
-            <div className="stat-icon">⚡</div>
+            <div className="stat-icon-wrapper active">
+              <Zap size={24} />
+            </div>
             <div className="stat-content">
               <h3>Active Users (24h)</h3>
-              <p className="stat-value">{summary.active_users_24h}</p>
+              <p className="stat-value">{summary.active_users_24h.toLocaleString()}</p>
             </div>
           </div>
 
           <div className="stat-card">
-            <div className="stat-icon">📊</div>
+            <div className="stat-icon-wrapper events">
+              <BarChart3 size={24} />
+            </div>
             <div className="stat-content">
               <h3>Total Events</h3>
-              <p className="stat-value">{summary.total_events}</p>
+              <p className="stat-value">{summary.total_events.toLocaleString()}</p>
             </div>
           </div>
 
           {dateRangeData && (
             <div className="stat-card">
-              <div className="stat-icon">📅</div>
+              <div className="stat-icon-wrapper range">
+                <Calendar size={24} />
+              </div>
               <div className="stat-content">
                 <h3>Events in Range</h3>
-                <p className="stat-value">{dateRangeData.total_events}</p>
+                <p className="stat-value">{dateRangeData.total_events.toLocaleString()}</p>
               </div>
             </div>
           )}
@@ -198,12 +225,14 @@ function Dashboard({ token, onLogout }) {
               <h3>Event Counts by Type (Bar Chart)</h3>
               <ResponsiveContainer width="100%" height={300}>
                 <BarChart data={barChartData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" />
-                  <YAxis />
-                  <Tooltip />
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} />
+                  <YAxis axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} />
+                  <Tooltip
+                    contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}
+                  />
                   <Legend />
-                  <Bar dataKey="count" fill="#667eea" />
+                  <Bar dataKey="count" fill="#4f46e5" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>

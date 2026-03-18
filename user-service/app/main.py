@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends, HTTPException, status
+from fastapi import FastAPI, Depends, HTTPException, status, BackgroundTasks
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
@@ -56,6 +56,7 @@ async def health_check():
 
 @app.post("/token", response_model=schemas.Token)
 async def login(
+    background_tasks: BackgroundTasks,
     form_data: OAuth2PasswordRequestForm = Depends(),
     db: Session = Depends(get_db)
 ):
@@ -73,14 +74,15 @@ async def login(
         data={"sub": user.username}, expires_delta=access_token_expires
     )
 
-    # Send login event to analytics
-    await users.send_event_to_analytics("user_login", user.id)
+    # Send login event to analytics (background task)
+    background_tasks.add_task(users.send_event_to_analytics, "user_login", user.id)
 
     return {"access_token": access_token, "token_type": "bearer"}
 
 @app.post("/login", response_model=schemas.Token)
 async def login_json(
     user_login: schemas.UserLogin,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db)
 ):
     """Alternative login endpoint accepting JSON"""
@@ -96,7 +98,7 @@ async def login_json(
         data={"sub": user.username}, expires_delta=access_token_expires
     )
 
-    # Send login event to analytics
-    await users.send_event_to_analytics("user_login", user.id)
+    # Send login event to analytics (background task)
+    background_tasks.add_task(users.send_event_to_analytics, "user_login", user.id)
 
     return {"access_token": access_token, "token_type": "bearer"}
