@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 from datetime import timedelta
 from prometheus_fastapi_instrumentator import Instrumentator
 import logging
+import os
 
 from . import models, schemas, auth
 from .database import engine, get_db
