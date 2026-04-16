@@ -1,5 +1,9 @@
 import pytest
 from fastapi import status
+import unittest.mock as mock
+from fastapi.testclient import TestClient
+from app.main import app
+from app.database import get_db
 
 def test_create_user(client):
     """Test user registration"""
@@ -171,7 +175,10 @@ def test_health_check(client):
     assert response.json() == {"status": "healthy"}
 
 def test_update_other_user_forbidden(client):
-    """Test updating another user's profile fails"""
+    """
+    Scenario: User attempts to update another user's profile.
+    Prevents: Unauthorized data modification.
+    """
     # Create first user
     client.post(
         "/users/",
@@ -201,7 +208,10 @@ def test_update_other_user_forbidden(client):
     assert response.status_code == status.HTTP_403_FORBIDDEN
 
 def test_create_user_invalid_data(client):
-    """Test creating user with invalid data fails"""
+    """
+    Scenario: Attempt to create user with data violating schema constraints.
+    Prevents: Corrupt/invalid data from entering the database.
+    """
     # Username too short
     response = client.post(
         "/users/",
@@ -222,3 +232,53 @@ def test_create_user_invalid_data(client):
         json={"username": "testuser", "email": "invalid-email", "password": "password123"}
     )
     assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+
+@mock.patch("httpx.AsyncClient.post")
+def test_analytics_service_failure_handling(mock_post, client):
+    """
+    Scenario: User Service attempts to send an event to Analytics Service, but it is down.
+    Prevents: User service operations from failing due to external service unavailability.
+    """
+    mock_post.side_effect = Exception("Analytics service down")
+
+    response = client.post(
+        "/users/",
+        json={
+            "username": "resilient_user",
+            "email": "resilient@example.com",
+            "password": "password123"
+        }
+    )
+
+    # User creation should still succeed
+    assert response.status_code == status.HTTP_201_CREATED
+    assert response.json()["username"] == "resilient_user"
+
+@mock.patch("sqlalchemy.orm.Session.commit")
+def test_database_unavailability_handling(mock_commit, db_session):
+    """
+    Scenario: Database is unavailable during user registration.
+    Prevents: System crashing or returning unhandled exceptions.
+    """
+    mock_commit.side_effect = Exception("Database connection lost")
+
+    # We use a custom client here to ensure we don't raise server exceptions to the test
+    # which allows us to verify the 500 status code.
+    def override_get_db():
+        try:
+            yield db_session
+        finally:
+            pass
+
+    app.dependency_overrides[get_db] = override_get_db
+    with TestClient(app, raise_server_exceptions=False) as no_raise_client:
+        response = no_raise_client.post(
+            "/users/",
+            json={
+                "username": "db_fail_user",
+                "email": "db_fail@example.com",
+                "password": "password123"
+            }
+        )
+        assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
+    app.dependency_overrides.clear()
