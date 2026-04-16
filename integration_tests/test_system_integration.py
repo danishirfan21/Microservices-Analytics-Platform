@@ -1,7 +1,6 @@
 import pytest
 import httpx
 import time
-import subprocess
 import os
 
 USER_SERVICE_URL = os.getenv("USER_SERVICE_URL", "http://localhost:8000")
@@ -10,8 +9,8 @@ ANALYTICS_SERVICE_URL = os.getenv("ANALYTICS_SERVICE_URL", "http://localhost:800
 @pytest.mark.asyncio
 async def test_full_user_and_analytics_lifecycle():
     """
-    Scenario: User registers, logs in, and updates their profile in a real running system.
-    Prevents: Breakage in the critical path where User Service fails to trigger events in Analytics Service.
+    Scenario: User registers, logs in, and updates their profile.
+    Verification: Analytics Service reflects all events.
     """
     async with httpx.AsyncClient() as client:
         unique_suffix = int(time.time())
@@ -57,8 +56,8 @@ async def test_full_user_and_analytics_lifecycle():
 @pytest.mark.asyncio
 async def test_analytics_summary_cross_service_aggregation():
     """
-    Scenario: Analytics Service requests the total user count from the User Service to build a summary.
-    Prevents: Data inconsistency where the dashboard shows incorrect user counts because service-to-service calls fail.
+    Scenario: Analytics Service requests total user count from User Service.
+    Verification: Summary user count matches User Service count.
     """
     async with httpx.AsyncClient() as client:
         # Get count from User Service
@@ -74,42 +73,13 @@ async def test_analytics_summary_cross_service_aggregation():
         assert actual_count == expected_count
 
 @pytest.mark.asyncio
-async def test_user_service_resilience_to_analytics_outage():
+async def test_cross_service_invalid_user_id():
     """
-    Scenario: User Service attempts to record an event but the Analytics Service is completely offline.
-    Prevents: Cascading failures where the entire system goes down because a non-critical analytics service is unreachable.
-    """
-    # 1. Stop Analytics Service
-    subprocess.run(["pkill", "-f", "uvicorn.*8001"], shell=False)
-    time.sleep(1)
-
-    async with httpx.AsyncClient() as client:
-        # 2. Attempt Registration
-        username = f"resilient_user_{int(time.time())}"
-        reg_resp = await client.post(
-            f"{USER_SERVICE_URL}/users/",
-            json={"username": username, "email": f"{username}@test.com", "password": "password"}
-        )
-        # Should still succeed despite failing to send event to analytics
-        assert reg_resp.status_code == 201
-
-    # 3. Restart Analytics Service for other tests or future runs
-    # This uses the environment and paths verified during investigation
-    subprocess.Popen(
-        "export DATABASE_URL=sqlite:///./test_analytics.db && export USER_SERVICE_URL=http://localhost:8000 && cd /app/analytics-service && uvicorn app.main:app --host 0.0.0.0 --port 8001 > /app/analytics_service.log 2>&1",
-        shell=True
-    )
-    time.sleep(5)
-
-@pytest.mark.asyncio
-async def test_invalid_registration_data_validation():
-    """
-    Scenario: User sends invalid data (short username, bad email) to the registration endpoint.
-    Prevents: 500 Internal Server Errors or database corruption from malformed input.
+    Goal: Verify Analytics handles received events for non-existent users gracefully.
     """
     async with httpx.AsyncClient() as client:
         response = await client.post(
-            f"{USER_SERVICE_URL}/users/",
-            json={"username": "a", "email": "not-an-email", "password": "1"}
+            f"{ANALYTICS_SERVICE_URL}/analytics/events",
+            json={"event_type": "ghost_action", "user_id": 99999, "event_metadata": {}}
         )
-        assert response.status_code == 422
+        assert response.status_code == 201

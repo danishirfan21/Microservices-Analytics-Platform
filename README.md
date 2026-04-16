@@ -240,6 +240,32 @@ Test coverage includes:
 - Filtering and pagination
 - Date range queries
 
+## Smoke Testing
+
+A production-style smoke test script is available to verify the entire system end-to-end. It simulates real user behavior without using any mocks.
+
+### Prerequisites
+
+The services must be running (either via Docker or locally).
+
+```bash
+pip install requests
+```
+
+### Running the Smoke Test
+
+```bash
+python3 smoke_test.py
+```
+
+The script will:
+1. Register a new unique user.
+2. Login and retrieve a JWT token.
+3. Access protected user profile data.
+4. Record a custom analytics event.
+5. Fetch the analytics summary.
+6. Validate data consistency across services.
+
 ## Kubernetes Deployment
 
 ### 1. Create namespace
