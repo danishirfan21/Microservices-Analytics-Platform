@@ -40,7 +40,7 @@ services:
   # User Service
   user-service:
     build:
-      context: ./user-service
+      context: ./user_service
       dockerfile: Dockerfile
     container_name: user-service
     ports:
@@ -61,7 +61,7 @@ services:
   # Analytics Service
   analytics-service:
     build:
-      context: ./analytics-service
+      context: ./analytics_service
       dockerfile: Dockerfile
     container_name: analytics-service
     ports:

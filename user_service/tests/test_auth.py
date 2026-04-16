@@ -1,5 +1,5 @@
 import pytest
-from app.auth import get_password_hash, verify_password, create_access_token, SECRET_KEY, ALGORITHM
+from user_service.user_app.auth import get_password_hash, verify_password, create_access_token, SECRET_KEY, ALGORITHM
 from datetime import timedelta
 from fastapi import status
 from jose import jwt
@@ -71,7 +71,7 @@ def test_inactive_user_token(client, db_session):
     Scenario: User with is_active=False attempts to access protected routes.
     Prevents: Blocked/disabled users from performing actions.
     """
-    from app.models import User
+    from user_service.user_app.models import User
 
     hashed_password = get_password_hash("password123")
     user = User(username="inactive", email="inactive@example.com", hashed_password=hashed_password, is_active=False)
