@@ -169,3 +169,56 @@ def test_health_check(client):
     response = client.get("/health")
     assert response.status_code == status.HTTP_200_OK
     assert response.json() == {"status": "healthy"}
+
+def test_update_other_user_forbidden(client):
+    """Test updating another user's profile fails"""
+    # Create first user
+    client.post(
+        "/users/",
+        json={"username": "user1", "email": "user1@example.com", "password": "password123"}
+    )
+
+    # Create second user and login
+    create_response2 = client.post(
+        "/users/",
+        json={"username": "user2", "email": "user2@example.com", "password": "password123"}
+    )
+    user2_id = create_response2.json()["id"]
+
+    login_response = client.post(
+        "/login",
+        json={"username": "user1", "password": "password123"}
+    )
+    token1 = login_response.json()["access_token"]
+
+    # Try to update user 2 with user 1's token
+    response = client.put(
+        f"/users/{user2_id}",
+        headers={"Authorization": f"Bearer {token1}"},
+        json={"full_name": "Should Fail"}
+    )
+
+    assert response.status_code == status.HTTP_403_FORBIDDEN
+
+def test_create_user_invalid_data(client):
+    """Test creating user with invalid data fails"""
+    # Username too short
+    response = client.post(
+        "/users/",
+        json={"username": "us", "email": "test@example.com", "password": "password123"}
+    )
+    assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+
+    # Password too short
+    response = client.post(
+        "/users/",
+        json={"username": "testuser", "email": "test@example.com", "password": "pass"}
+    )
+    assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+
+    # Invalid email
+    response = client.post(
+        "/users/",
+        json={"username": "testuser", "email": "invalid-email", "password": "password123"}
+    )
+    assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY

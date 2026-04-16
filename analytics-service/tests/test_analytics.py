@@ -193,3 +193,36 @@ def test_event_pagination(client):
     assert response.status_code == status.HTTP_200_OK
     data = response.json()
     assert len(data) == 5
+
+def test_create_event_invalid_data(client):
+    """Test creating event with invalid data fails"""
+    # Missing event_type
+    response = client.post(
+        "/analytics/events",
+        json={"user_id": 1, "event_metadata": {}}
+    )
+    assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+
+    # Missing user_id
+    response = client.post(
+        "/analytics/events",
+        json={"event_type": "test_event", "event_metadata": {}}
+    )
+    assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+
+def test_get_analytics_by_specific_date_range(client):
+    """Test getting analytics for a specific date range"""
+    # Create an event
+    client.post(
+        "/analytics/events",
+        json={"event_type": "user_login", "user_id": 1, "event_metadata": {}}
+    )
+
+    start_date = (datetime.now() - timedelta(days=1)).isoformat()
+    end_date = (datetime.now() + timedelta(days=1)).isoformat()
+
+    response = client.get(f"/analytics/events/date-range?start_date={start_date}&end_date={end_date}")
+
+    assert response.status_code == status.HTTP_200_OK
+    data = response.json()
+    assert data["total_events"] >= 1
