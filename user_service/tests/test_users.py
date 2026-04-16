@@ -2,8 +2,8 @@ import pytest
 from fastapi import status
 import unittest.mock as mock
 from fastapi.testclient import TestClient
-from app.main import app
-from app.database import get_db
+from user_service.user_app.main import app
+from user_service.user_app.database import get_db
 
 def test_create_user(client):
     """Test user registration"""

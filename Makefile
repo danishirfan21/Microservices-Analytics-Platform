@@ -34,10 +34,10 @@ logs:
 test: test-user test-analytics
 
 test-user:
-	cd user-service && pytest -v
+	cd user_service && pytest -v
 
 test-analytics:
-	cd analytics-service && pytest -v
+	cd analytics_service && pytest -v
 
 clean:
 	docker-compose down -v

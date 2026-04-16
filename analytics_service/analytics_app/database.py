@@ -3,7 +3,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 import os
 
-DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://user:password@localhost:5433/analyticsdb")
+DATABASE_URL = os.getenv("ANALYTICS_DATABASE_URL") or os.getenv("DATABASE_URL", "postgresql://user:password@localhost:5432/analyticsdb")
 
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)

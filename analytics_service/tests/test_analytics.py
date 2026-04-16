@@ -298,7 +298,7 @@ def test_analytics_database_failure(mock_commit, client):
     mock_commit.side_effect = Exception("Analytics DB connection lost")
 
     from fastapi.testclient import TestClient
-    from app.main import app
+    from analytics_service.analytics_app.main import app
 
     with TestClient(app, raise_server_exceptions=False) as no_raise_client:
         response = no_raise_client.post(
